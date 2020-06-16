@@ -102,7 +102,6 @@ void StateConversion(byte buffer[], byte state[][Nb], int flag)
 		for (c = 0; c < Nb; c += 1) {
 			for (r = 0; r < 4; r += 1, bit += 1) {
 				buffer[bit] = state[r][c];
-				// printf("bit[%d] = %.2x ", bit, buffer[bit]);
 			}
 			printf("\n");
 		}
@@ -124,9 +123,24 @@ void SubBytes(byte state[][Nb])
 
 void ShiftRows(byte state[][Nb])
 {
-	int r;
+	int r, c, C;
+	byte temp_state[4][Nb];
+
+	/* think how this redundant memory can be removed */
+	for (r = 0; r < 4; r += 1) {
+		for (c = 0; c < Nb; c += 1) {
+			temp_state[r][c] = state[r][c];
+		}
+	}
+
 	for (r = 1; r < 4; r += 1) {
-			
+		for (c = 0; c < Nb; c += 1) {
+			/* ideally this should be mod Nb, but here we know Nb is
+			   4, so optimization is okay */
+			C = MOD4(r + c + Nb);
+
+			state[r][c] = temp_state[r][C];
+		}			
 	}
 	printf("after ShiftRows\n");
 	Show(state);
