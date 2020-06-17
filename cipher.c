@@ -2,77 +2,22 @@
 
 #include "constants.h"
 
-/* optimize this later, if it matters so much */
-/* 2a mod (x^4 + 1) */
-#define MULTIPLY2(x) ((x << 1) % 0x11)
-#define MOD4(a) (a > 0 ? (a & 3) : (4 + (a % -4)))
+/* shorthand macro for mod-4 calculation */
+#define MOD4(a) ((a) > 0 ? ((a) & 3) : (4 + ((a) % -4)))
 
-void SubWord(word *w)
-{
-	byte b[4] = {
-		(byte)(*w >> 24), 
-		(byte)(*w >> 16), 
-		(byte)(*w >>  8), 
-		(byte)(*w)
-	};
+/* extern function declarations */
+extern void KeySchedule(byte [], word []);
 
-	/* byte substituition */
-	b[0] = Sbox[b[0]]; 
-	b[1] = Sbox[b[1]]; 
-	b[2] = Sbox[b[2]]; 
-	b[3] = Sbox[b[3]];
+/* internal functinon declarations */
+void Show(byte [][Nb]);
+void StateConversion(byte [], byte [][Nb], int);
+void SubBytes(byte [][Nb], int);
+void ShiftRows(byte [][nb], int);
+byte MULTIPLY(byte, byte);
+void MixColumns(byte [][Nb], int);
+void AddRoundKey(byte [][Nb]);
 
-	*w = 0x00000000;
-	*w = (word)b[0] << 24 | (word)b[1] << 16 | (word)b[2] << 8 | (word)b[3];
-}
-
-void RotWord(word *w)
-{
-	byte b = *w >> 24;
-	*w <<= 8;
-	*w |= b;
-}
-
-void KeySchedule(byte key[], word w[])
-{
-	word temp;
-	int i = 0;
-
-	/* input */
-	while (i < Nk*4) {
-		scanf("%x%x%x%x", &key[i], &key[i + 1], &key[i + 2], 
-		      &key[i + 3]);
-
-		i += 4;
-	}
-	
-	/* key scheduling */
-	i = 0;
-	while (i < Nk) {
-		w[i] = (word)key[4*i + 0] << 24 | (word)key[4*i + 1] << 16 | 
-		       (word)key[4*i + 2] <<  8 | (word)key[4*i + 3];
-		i += 1;
-	}
-	
-	/* key expansion */
-	i = Nk;
-	while (i < Nb * (Nr + 1)) {
-		temp = w[i - 1];
-		
-		if (i % Nk == 0) {
-			RotWord(&temp);
-			SubWord(&temp);
-			temp ^= Rcon[i / Nk];
-		}
-		else if (Nk > 0 && i % Nk == 4) {
-			SubWord(&temp);
-		}
-
-		w[i] = w[i - Nk] ^ temp;
-		i += 1;
-	}
-}
-
+/******************************* CIPHER ENGINE *******************************/
 void Show(byte state[][Nb]) 
 {
 	int r, c;
@@ -108,12 +53,17 @@ void StateConversion(byte buffer[], byte state[][Nb], int flag)
 	}
 }
 
-void SubBytes(byte state[][Nb])
+void SubBytes(byte state[][Nb], int inverse_mode)
 {
 	int r, c;
 	for (c = 0; c < Nb; c += 1) {
 		for (r = 0; r < 4; r += 1) {
-			state[r][c] = Sbox[state[r][c]];
+			if (!inverse_mode) 
+				state[r][c] = Sbox[state[r][c]];
+			
+			else 
+				state[r][c] = InvSbox[state[r][c]];
+			
 		}
 	}
 	printf("after SubBytes\n");
@@ -121,25 +71,25 @@ void SubBytes(byte state[][Nb])
 	printf("\n");
 }
 
-void ShiftRows(byte state[][Nb])
+void ShiftRows(byte state[][Nb], int inverse_mode)
 {
 	int r, c, C;
-	byte temp_state[4][Nb];
-
-	/* think how this redundant memory can be removed */
-	for (r = 0; r < 4; r += 1) {
-		for (c = 0; c < Nb; c += 1) {
-			temp_state[r][c] = state[r][c];
-		}
-	}
+	byte column[Nb];
 
 	for (r = 1; r < 4; r += 1) {
+		for (C = 0; C < Nb; C += 1) {
+			column[C] = state[r][C];
+		}
 		for (c = 0; c < Nb; c += 1) {
+			C = 0x00;
 			/* ideally this should be mod Nb, but here we know Nb is
 			   4, so optimization is okay */
-			C = MOD4(r + c + Nb);
+			if (!inverse_mode)
+				C = MOD4(r + c + Nb);
+			else
+				C = MOD4(c + Nb - r);
 
-			state[r][c] = temp_state[r][C];
+			state[r][c] = column[C];
 		}			
 	}
 	printf("after ShiftRows\n");
@@ -147,25 +97,62 @@ void ShiftRows(byte state[][Nb])
 	printf("\n");
 }
 
-/* needs some optimizations, if time is on our side */
-void MixColumns(byte state[][Nb])
+/* stolen from https://tinyurl.com/gf-multiplication */
+byte MULTIPLY(byte a, byte b)
 {
-	int r;
-	byte a, b, c, d;
-	for (r = 0; r < 4; r += 1) {
-		a = state[r][0], 
-		b = state[r][1],
-		c = state[r][2],
-		d = state[r][3];
+	byte product = 0x00, 
+	     counter, 
+	     carry;
+	
+	/* this is a trivial implementation of russian peasnat multiplication
+	 * method: http://mathforum.org/dr.math/faq/faq.peasant.html */
+	for (counter = 0; counter < 8; counter += 1) {
+		if (b & 1) 
+			product ^= a;
+		carry = a & 0x80;
+		a <<= 1;
+		
+		if (carry)
+			a ^= 0x1b;
+		b >>= 1;
+	}
+	return product;
+}
 
-		/* 2a + 3b + c + d */
-		state[r][0] = MULTIPLY2(a ^ b) ^ b ^ c ^ d;
-		/* a + 2b + 3c + d */
-		state[r][1] = MULTIPLY2(b ^ c) ^ c ^ d ^ a;
-		/* a + b + 2c + 3d */
-		state[r][2] = MULTIPLY2(c ^ d) ^ d ^ a ^ b;
-		/* 3a + b + c + 2d */
-		state[r][3] = MULTIPLY2(d ^ a) ^ a ^ b ^ c;
+/* needs some optimizations, if time is on our side */
+void MixColumns(byte state[][Nb], int inverse_mode)
+{
+	int col;
+	byte a, b, c, d;
+
+	for (col = 0; col < 4; col += 1) {
+		a = state[0][col], 
+		b = state[1][col],
+		c = state[2][col],
+		d = state[3][col];
+
+		/* see the wiki page on MixColumns() to see why this works */
+		if (!inverse_mode) {
+			state[0][col] = MULTIPLY(0x02, a) ^ MULTIPLY(0x03, b) ^
+			                c ^ d;
+			state[1][col] = MULTIPLY(0x03, c) ^ MULTIPLY(0x02, b) ^ 
+			                a ^ d;
+			state[2][col] = MULTIPLY(0x02, c) ^ MULTIPLY(0x03, d) ^
+			                a ^ b;
+			state[3][col] = MULTIPLY(0x03, a) ^ MULTIPLY(0x02, d) ^
+			                b ^ c;
+		}
+		else {
+			state[0][col] = MULTIPLY(0x02, a) ^ MULTIPLY(0x03, b) ^
+			                c ^ d;
+			state[1][col] = MULTIPLY(0x03, c) ^ MULTIPLY(0x02, b) ^ 
+			                a ^ d;
+			state[2][col] = MULTIPLY(0x02, c) ^ MULTIPLY(0x03, d) ^
+			                a ^ b;
+			state[3][col] = MULTIPLY(0x03, a) ^ MULTIPLY(0x02, d) ^
+			                b ^ c;	
+		}
+		
 	}
 	printf("after MixColumns\n");
 	Show(state);
@@ -203,24 +190,25 @@ int main()
 		scanf("%x%x%x%x", &in[i], &in[i + 1], &in[i + 2], &in[i + 3]);
 		i += 4;
 	}
-	printf("\n");
 	
 	printf("enter key\n");
 	KeySchedule(key, w);	
-	printf("\n");
 	
 	/* state formation */
 	StateConversion(in, state, 1);
 	
 	/* add initial round key */
+	printf("ROUND 0\n");
 	AddRoundKey(state, 0, w);
-	for (i = 1; i < Nr - 1; i += 1) {
+	for (i = 1; i < Nr; i += 1) {
+		printf("ROUND %d\n", i);
 		SubBytes(state);
 		ShiftRows(state);
 		MixColumns(state);
 		AddRoundKey(state, i, w);
 	}
 
+	printf("ROUND 10\n");
 	SubBytes(state);
 	ShiftRows(state);
 	AddRoundKey(state, Nr, w);
@@ -228,7 +216,7 @@ int main()
 	StateConversion(out, state, 0);
 
 	for (i = 0; i < Nb; i += 1) {
-		printf("%.2x %.2x %.2x %.2x ", out[i], out[i + 1], out[i + 2], 
+		printf("%.2x %.2x %.2x %.2x\n", out[i], out[i + 1], out[i + 2], 
 		        out[i + 2]);
 	}
 	printf("\n");
