@@ -1,14 +1,3 @@
-/* version 0.1 Changelog:
- *   - two files, main.c and aes.c
- *   - naming conventions according to the specification 
- *   - function size is variable, no 60 line per function limit
- *   - no helper/static functions (unless specified by the paper)
- *   - no weird indentation styles on function naming
- *   - no chunkify and no padding scheme (NULL padding only, bitch)
- *   - official state array & key schedule outputs match to FIPS specification
- *   - takes data of 128-bit, and key of 128-bit as well
- */
-
 #include <stdio.h>
 #include <string.h>
 
@@ -37,7 +26,7 @@ string_input(uint8_t *input, int size)
  * Nk = key size (in words)
  * Nr = number of rounds (absolute value)
  */
-int main()
+int main(int argc, char *argv[])
 {
 	uint8_t input[4 * Nb],
 		key[4 * Nk],

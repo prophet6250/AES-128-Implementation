@@ -1,4 +1,7 @@
+#include <stdio.h>
+
 #include "constants.h"
+#include "keyschedule.h"
 
 void SubWord(word *w)
 {

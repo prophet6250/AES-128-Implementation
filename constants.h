@@ -1,13 +1,10 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
 /* these values were referenced from 
  * https://github.com/kokke/tiny-AES-c/blob/master/aes.c */
 
-#ifndef __CONSTANTS__
-#define __CONSTANTS__
-
-#define Nb 4
-#define Nr 10
-#define Nk 4
-
+/* some easy to understand typedefs */
 typedef unsigned char byte;
 typedef unsigned int  word;
 
@@ -46,7 +43,7 @@ const byte Sbox[256] = {
 	0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-const byte ISbox[256] = {
+const byte InvSbox[256] = {
 	0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38,
 	0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
 	0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87,
