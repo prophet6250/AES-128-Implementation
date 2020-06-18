@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 	fputs(key, stdout);
 
 	CipherEngine(input, output, key);
+	printf("decrypted data: ");
 	fputs(output, stdout);
 
 	printf("\n");
