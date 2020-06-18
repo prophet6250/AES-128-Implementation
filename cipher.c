@@ -1,11 +1,101 @@
 #include <stdio.h>
 
-#include "cipher.h"
 #include "constants.h"
 
-extern void KeySchedule(byte [], word []);
+/* shorthand macro for mod-4 calculation */
+#define MOD4(a) ((a) > 0 ? ((a) & 3) : (4 + ((a) % -4)))
+#define Nb 4
+#define Nr 10
+#define Nk 4
+
+/* some easy to understand typedefs */
+typedef unsigned char byte;
+typedef unsigned int  word;
+
+/* key expansion function declarations */
+void SubWord(word *);
+void RotWord(word *);
+void KeySchedule(byte [], word []);
+
+/* cipher engine function declarations */
+void Show(byte [][Nb]);
+void StateConversion(byte [], byte [][Nb], int);
+void SubBytes(byte [][Nb], int);
+void ShiftRows(byte [][Nb], int);
+byte MULTIPLY(byte, byte);
+void MixColumns(byte [][Nb], int);
+void AddRoundKey(byte [][Nb], int, word []);
+
+/******************************* KEY SCHEDULING *******************************/
+
+void SubWord(word *w)
+{
+	byte b[4] = {
+		(byte)(*w >> 24), 
+		(byte)(*w >> 16), 
+		(byte)(*w >>  8), 
+		(byte)(*w)
+	};
+
+	/* byte substituition */
+	b[0] = Sbox[b[0]]; 
+	b[1] = Sbox[b[1]]; 
+	b[2] = Sbox[b[2]]; 
+	b[3] = Sbox[b[3]];
+
+	*w = 0x00000000;
+	*w = (word)b[0] << 24 | (word)b[1] << 16 | (word)b[2] << 8 | (word)b[3];
+}
+
+void RotWord(word *w)
+{
+	byte b = *w >> 24;
+	*w <<= 8;
+	*w |= b;
+}
+
+void KeySchedule(byte key[], word w[])
+{
+	word temp;
+	int i = 0;
+
+	/* input */
+	// while (i < Nk*4) {
+	// 	scanf("%x%x%x%x", &key[i], &key[i + 1], &key[i + 2], 
+	// 	      &key[i + 3]);
+
+	// 	i += 4;
+	// }
+	
+	/* key scheduling */
+	i = 0;
+	while (i < Nk) {
+		w[i] = (word)key[4*i + 0] << 24 | (word)key[4*i + 1] << 16 | 
+		       (word)key[4*i + 2] <<  8 | (word)key[4*i + 3];
+		i += 1;
+	}
+	
+	/* key expansion */
+	i = Nk;
+	while (i < Nb * (Nr + 1)) {
+		temp = w[i - 1];
+		
+		if (i % Nk == 0) {
+			RotWord(&temp);
+			SubWord(&temp);
+			temp ^= Rcon[i / Nk];
+		}
+		else if (Nk > 0 && i % Nk == 4) {
+			SubWord(&temp);
+		}
+
+		w[i] = w[i - Nk] ^ temp;
+		i += 1;
+	}
+}
 
 /******************************* CIPHER ENGINE *******************************/
+
 void Show(byte state[][Nb]) 
 {
 	int r, c;
@@ -169,22 +259,23 @@ void AddRoundKey(byte state[][Nb], int round, word w[])
 	printf("\n");
 }
 
-int main()
+
+/************************** MAIN ENCRYPTION ENGINE ***************************/
+void CipherEngine(byte in[], byte out[], byte key[])
 {
 	byte state[4][Nb];
-	byte in[4 * Nb], out[4 * Nb], key[4 * Nk];
 	word w[Nb * (Nr + 1)];
 	int i = 0;
 
-	/* input i/o */
-	printf("enter plaintext\n");
-	i = 0;
-	while (i < Nb * 4) {
-		scanf("%x%x%x%x", &in[i], &in[i + 1], &in[i + 2], &in[i + 3]);
-		i += 4;
-	}
+	// /* input i/o */
+	// printf("enter plaintext\n");
+	// i = 0;
+	// while (i < Nb * 4) {
+	// 	scanf("%x%x%x%x", &in[i], &in[i + 1], &in[i + 2], &in[i + 3]);
+	// 	i += 4;
+	// }
 	
-	printf("enter key\n");
+	// printf("enter key\n");
 	KeySchedule(key, w);	
 	
 	/* state formation */
@@ -207,14 +298,14 @@ int main()
 	ShiftRows(state, 0);
 	AddRoundKey(state, Nr, w);
 
-	StateConversion(out, state, 0);
+	// StateConversion(out, state, 0);
 
 	/* decrypting the crypt data */
 	printf("DECRYPTION STARTED\nROUND 0\n");
 	AddRoundKey(state, Nr, w);
 	Show(state);
 	
-	for (i = Nr - 1; i > 0; i += 1) {
+	for (i = Nr - 1; i > 0; i -= 1) {
 		printf("ROUND %d\n", Nr - i);
 		ShiftRows(state, 1);
 		SubBytes(state, 1);
@@ -228,5 +319,5 @@ int main()
 	AddRoundKey(state, 0, w);
 	printf("\n");
 
-	return 0;
+	StateConversion(out, state, 0);
 }

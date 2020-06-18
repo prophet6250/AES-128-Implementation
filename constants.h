@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
+#ifndef __CONSTANTS__
+#define __CONSTANTS__
 
 /* these values were referenced from 
  * https://github.com/kokke/tiny-AES-c/blob/master/aes.c */

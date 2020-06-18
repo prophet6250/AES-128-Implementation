@@ -1,46 +1,32 @@
 #include <stdio.h>
-#include <string.h>
 
-void
-string_input(uint8_t *input, int size)
-{
-	int i = 0;
-	while (i < size) {
-		scanf("%x %x %x %x", &input[i], &input[i + 1], 
-				&input[i + 2], &input[i + 3]);
-		i += 4;
-	}
-	
-	i = 0;
-	while (i < Nb*4) {
-		printf("%X%X%X%X", input[i], input[i + 1], 
-				input[i + 2], input[i + 3]);
-		i += 4;
-	}
-}
+#define Nb 4
+#define Nk 4
+#define Nr 10;
 
+/* shorthand typedefs to make the program more readable :) */
+typedef unsigned char byte;
+typedef unsigned int  word;
 
-#include "aes.h"
+/* function declarations */
+extern void CipherEngine(byte [], byte [], byte []);
 
-/* Nb = block size (in words)
- * Nk = key size (in words)
- * Nr = number of rounds (absolute value)
- */
 int main(int argc, char *argv[])
 {
-	uint8_t input[4 * Nb],
-		key[4 * Nk],
-		output[4 * Nb];
-	uint32_t w[Nb * (Nr + 1)];
-	int i, j;
+	byte input[4 * Nb] = {0x00},
+	     key[4 * Nk] = {0x00},
+	     output[4 * Nb] = {0x00};
 
-	/* all null padded */
-	memset(input, 0, sizeof(input));
-	memset(output, 0, sizeof(output));
-	memset(w, 0, sizeof(w));
-	
-	string_input(input, 4*Nb);
-	string_input(key, 4*Nk);
+	printf("enter plaintext\n");
+	fgets(input, 4*Nb, stdin);
+	fputs(input, stdout);
+
+	printf("enter key (not password)\n");
+	fgets(key, 4*Nk, stdin);
+	fputs(key, stdout);
+
+	CipherEngine(input, output, key);
+	fputs(output, stdout);
 
 	printf("\n");
 	return 0;
