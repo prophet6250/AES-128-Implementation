@@ -59,15 +59,7 @@ void KeySchedule(byte key[], word w[])
 	word temp;
 	int i = 0;
 
-	/* input */
-	// while (i < Nk*4) {
-	// 	scanf("%x%x%x%x", &key[i], &key[i + 1], &key[i + 2], 
-	// 	      &key[i + 3]);
-
-	// 	i += 4;
-	// }
-	
-	/* key scheduling */
+	/* converting key from bytes to words */
 	i = 0;
 	while (i < Nk) {
 		w[i] = (word)key[4*i + 0] << 24 | (word)key[4*i + 1] << 16 | 
@@ -198,7 +190,6 @@ byte MULTIPLY(byte a, byte b)
 	return product;
 }
 
-/* needs some optimizations, if time is on our side */
 void MixColumns(byte state[][Nb], int inverse_mode)
 {
 	int col;
@@ -267,21 +258,10 @@ void CipherEngine(byte in[], byte out[], byte key[])
 	word w[Nb * (Nr + 1)];
 	int i = 0;
 
-	// /* input i/o */
-	// printf("enter plaintext\n");
-	// i = 0;
-	// while (i < Nb * 4) {
-	// 	scanf("%x%x%x%x", &in[i], &in[i + 1], &in[i + 2], &in[i + 3]);
-	// 	i += 4;
-	// }
-	
-	// printf("enter key\n");
 	KeySchedule(key, w);	
 	
-	/* state formation */
 	StateConversion(in, state, 1);
 	
-	/* add initial round key */
 	printf("ENCRYPTION STARTED\nROUND 0\n");
 	AddRoundKey(state, 0, w);
 	
@@ -298,9 +278,6 @@ void CipherEngine(byte in[], byte out[], byte key[])
 	ShiftRows(state, 0);
 	AddRoundKey(state, Nr, w);
 
-	// StateConversion(out, state, 0);
-
-	/* decrypting the crypt data */
 	printf("DECRYPTION STARTED\nROUND 0\n");
 	AddRoundKey(state, Nr, w);
 	Show(state);

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #define Nb 4
 #define Nk 4
@@ -19,10 +20,12 @@ int main(int argc, char *argv[])
 
 	printf("enter plaintext\n");
 	fgets(input, 4*Nb, stdin);
+	memset(input + strlen(input) - 1, 0, 4*Nb);
 	fputs(input, stdout);
 
 	printf("enter key (not password)\n");
 	fgets(key, 4*Nk, stdin);
+	memset(key + strlen(key) - 1, 0, 4*Nk);
 	fputs(key, stdout);
 
 	CipherEngine(input, output, key);
