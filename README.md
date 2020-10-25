@@ -34,7 +34,7 @@ This is a very bare bones implementation of the AES-128. I say that because ther
 
 2 may be achieved by calculating the number of blocks of data, encrypting individual blocks and appending them to a buffer, and then outputting the buffer in the end
 
-3 may be achieved by making a seperate decipher function inside cipehr.c and putting all the decipher functions inside it
+3 may be achieved by making a seperate decipher function inside cipher.c and putting all the decipher functions inside it
 
 4 is not really clear to me, but I feel that there may be many places where I have slacked very much, and optimizations may be possible :)
 
