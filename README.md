@@ -30,7 +30,7 @@ This is a very bare bones implementation of the AES-128. I say that because ther
 3. Seperate Encipher and Decipher modes (currently just enciphers, outputs, deciphers and outputs)
 4. bit optimizations are heavily missing from the basic operations of AES
 
-1 may be achieved by using a hasing functions that creates a 128 bit digest (like MD5 or something)
+1 may be achieved by using a hashing functions that creates a 128 bit digest (like MD5 or something)
 
 2 may be achieved by calculating the number of blocks of data, encrypting individual blocks and appending them to a buffer, and then outputting the buffer in the end
 
