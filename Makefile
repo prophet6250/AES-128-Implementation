@@ -6,6 +6,8 @@ aes.exe: cipher.o main.o
 clean: 
 	rm -f *.o
 	rm aes.exe
+	rm output
 
 run: aes.exe
-	clear; ./aes.exe
+	clear
+	./aes.exe > output
