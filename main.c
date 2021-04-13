@@ -21,19 +21,19 @@ int main(int argc, char *argv[])
 	printf("enter plaintext\n");
 	fgets(input, 4*Nb, stdin);
 	memset(input + strlen(input) - 1, 0, 4*Nb);
-	printf("\n");
-	fputs(input, stdout);
+//	printf("\n");
+//	fputs(input, stdout);
 
-	printf("\nenter key (not password)\n");
+	printf("enter key (not password)\n");
 	fgets(key, 4*Nk, stdin);
 	memset(key + strlen(key) - 1, 0, 4*Nk);
-	printf("\n");
-	fputs(key, stdout);
+//	printf("\n");
+//	fputs(key, stdout);
 
 	CipherEngine(input, output, key);
 	printf("decrypted data: ");
 	fputs(output, stdout);
 
-	printf("\n");
+//	printf("\n");
 	return 0;
 }
