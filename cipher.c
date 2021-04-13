@@ -90,14 +90,14 @@ void KeySchedule(byte key[], word w[])
 
 void Show(byte state[][Nb]) 
 {
-	int r, c;
+/*	int r, c;
 	for (r = 0; r < 4; r += 1) {
 		for (c = 0; c < 4; c += 1) {
 			printf("state(%d, %d) = %x ", r, c, state[r][c]);
 		}
 		printf("\n");
 	}
-	printf("\n");
+	printf("\n");*/
 }
 
 void StateConversion(byte buffer[], byte state[][Nb], int flag)
@@ -118,7 +118,7 @@ void StateConversion(byte buffer[], byte state[][Nb], int flag)
 			for (r = 0; r < 4; r += 1, bit += 1) {
 				buffer[bit] = state[r][c];
 			}
-			printf("\n");
+//			printf("\n");
 		}
 	}
 }
@@ -136,9 +136,9 @@ void SubBytes(byte state[][Nb], int inverse_mode)
 			
 		}
 	}
-	printf("after SubBytes\n");
-	Show(state);
-	printf("\n");
+//	printf("after SubBytes\n");
+//	Show(state);
+//	printf("\n");
 }
 
 void ShiftRows(byte state[][Nb], int inverse_mode)
@@ -163,9 +163,9 @@ void ShiftRows(byte state[][Nb], int inverse_mode)
 			state[r][c] = column[C];
 		}			
 	}
-	printf("after ShiftRows\n");
-	Show(state);
-	printf("\n");
+//	printf("after ShiftRows\n");
+//	Show(state);
+//	printf("\n");
 }
 
 /* stolen from https://tinyurl.com/gf-multiplication */
@@ -228,9 +228,9 @@ void MixColumns(byte state[][Nb], int inverse_mode)
 		}
 		
 	}
-	printf("after MixColumns\n");
-	Show(state);
-	printf("\n");
+//	printf("after MixColumns\n");
+//	Show(state);
+//	printf("\n");
 }
 
 void AddRoundKey(byte state[][Nb], int round, word w[])
@@ -245,9 +245,9 @@ void AddRoundKey(byte state[][Nb], int round, word w[])
 		state[2][c] ^= (byte)(w[word_index] >> 8);
 		state[3][c] ^= (byte)(w[word_index]);
 	}
-	printf("after AddRoundKey\n");
-	Show(state);
-	printf("\n");
+//	printf("after AddRoundKey\n");
+//	Show(state);
+//	printf("\n");
 }
 
 
@@ -262,39 +262,33 @@ void CipherEngine(byte in[], byte out[], byte key[])
 	
 	StateConversion(in, state, 1);
 	
-	printf("ENCRYPTION STARTED\nROUND 0\n");
 	AddRoundKey(state, 0, w);
 	
 	for (i = 1; i < Nr; i += 1) {
-		printf("ROUND %d\n", i);
 		SubBytes(state, 0);
 		ShiftRows(state, 0);
 		MixColumns(state, 0);
 		AddRoundKey(state, i, w);
 	}
 
-	printf("ROUND 10\n");
 	SubBytes(state, 0);
 	ShiftRows(state, 0);
 	AddRoundKey(state, Nr, w);
 
-	printf("DECRYPTION STARTED\nROUND 0\n");
 	AddRoundKey(state, Nr, w);
 	Show(state);
 	
 	for (i = Nr - 1; i > 0; i -= 1) {
-		printf("ROUND %d\n", Nr - i);
 		ShiftRows(state, 1);
 		SubBytes(state, 1);
 		AddRoundKey(state, i, w);
 		MixColumns(state, 1);
 	}
 	
-	printf("Round 10\n");
 	ShiftRows(state, 1);
 	SubBytes(state, 1);
 	AddRoundKey(state, 0, w);
-	printf("\n");
+//	printf("\n");
 
 	StateConversion(out, state, 0);
 }
